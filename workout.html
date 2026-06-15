@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Registra tu entrenamiento de hoy: ejercicios, series, pesos y repeticiones. Recibe recomendaciones de IA para la siguiente sesión." />
+  <title>Gym Progression — Registrar Entrenamiento</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .exercise-blocks { display: flex; flex-direction: column; gap: 1rem; }
+    .ai-results { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+    .exercise-search-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-hover);
+      border-radius: var(--radius-md);
+      z-index: 50;
+      max-height: 220px;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+    }
+    .dropdown-item {
+      padding: 0.625rem 1rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background var(--transition);
+    }
+    .dropdown-item:hover { background: var(--bg-card-hover); }
+    .dropdown-item-meta { font-size: 0.7rem; color: var(--text-muted); }
+    .add-new-exercise-item { color: var(--accent); font-weight: 600; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ── SIDEBAR ── -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🏋️</div>
+      <div class="sidebar-logo-text">
+        <strong>Gym Progression</strong>
+        <span>Diario de entrenamiento</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Principal</div>
+      <a class="nav-item" href="index.html" data-page="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <a class="nav-item" href="workout.html" data-page="workout.html"><span class="nav-icon">💪</span> Registrar Entrenamiento</a>
+      <a class="nav-item" href="history.html" data-page="history.html"><span class="nav-icon">📅</span> Historial</a>
+      <a class="nav-item" href="exercises.html" data-page="exercises.html"><span class="nav-icon">🏋️</span> Ejercicios</a>
+    </div>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="settings.html" data-page="settings.html"><span class="nav-icon">⚙️</span> Configuración</a>
+    </div>
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <main class="main-content">
+    <div class="page-container">
+
+      <div class="page-header animate-in">
+        <div class="page-header-left">
+          <h1 class="page-title">Registrar Entrenamiento</h1>
+          <p class="page-subtitle" id="session-date-display"></p>
+        </div>
+      </div>
+
+      <!-- Selector de tipo -->
+      <div class="card mb-3 animate-in animate-delay-1">
+        <div class="form-label mb-1">Tipo de sesión</div>
+        <div class="type-tabs" id="type-tabs">
+          <button class="type-tab active-push" data-type="Push" onclick="selectType('Push')">🔴 Push</button>
+          <button class="type-tab" data-type="Pull" onclick="selectType('Pull')">🟣 Pull</button>
+          <button class="type-tab" data-type="Legs" onclick="selectType('Legs')">🔵 Legs</button>
+          <button class="type-tab" data-type="Custom" onclick="selectType('Custom')">🟢 Custom</button>
+        </div>
+      </div>
+
+      <!-- Buscador de ejercicios -->
+      <div class="card mb-3 animate-in animate-delay-2">
+        <div class="form-label mb-1">Añadir ejercicio</div>
+        <div style="position:relative">
+          <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input
+              type="text"
+              id="exercise-search"
+              class="form-control"
+              placeholder="Buscar ejercicio o escribir nombre nuevo..."
+              autocomplete="off"
+            />
+          </div>
+          <div id="exercise-dropdown" class="exercise-search-dropdown" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- Bloques de ejercicios -->
+      <div class="section-title animate-in animate-delay-2">Ejercicios de hoy</div>
+      <div class="exercise-blocks animate-in animate-delay-2" id="exercise-blocks">
+        <div class="empty-state" style="padding:2rem">
+          <div class="empty-state-icon">➕</div>
+          <div class="empty-state-title">Busca y añade ejercicios arriba</div>
+        </div>
+      </div>
+
+      <!-- Notas -->
+      <div class="card mt-3 animate-in animate-delay-3">
+        <div class="form-group">
+          <label class="form-label" for="session-notes">Notas de la sesión (opcional)</label>
+          <textarea id="session-notes" class="form-control" rows="2" placeholder="Ej: Buena sesión, algo cansado en press..."></textarea>
+        </div>
+      </div>
+
+      <!-- Botón guardar -->
+      <div class="flex gap-1 mt-3 animate-in animate-delay-3" style="justify-content:flex-end">
+        <a href="index.html" class="btn btn-secondary">Cancelar</a>
+        <button class="btn btn-primary btn-lg" id="save-btn" onclick="saveWorkout()">
+          💾 Guardar sesión y obtener recomendaciones IA
+        </button>
+      </div>
+
+      <!-- Resultados IA -->
+      <div id="ai-section" style="display:none;margin-top:2rem">
+        <div class="section-title">🤖 Recomendaciones para la próxima sesión</div>
+        <div class="ai-results" id="ai-results"></div>
+        <div class="flex gap-1 mt-3" style="justify-content:flex-end">
+          <a href="index.html" class="btn btn-primary">Volver al Dashboard</a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Modal: Nuevo ejercicio personalizado -->
+<div class="modal-overlay" id="new-exercise-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Añadir ejercicio personalizado</h3>
+      <button class="btn btn-icon btn-ghost" onclick="closeModal('new-exercise-modal')">✕</button>
+    </div>
+    <div class="flex flex-col gap-2">
+      <div class="form-group">
+        <label class="form-label">Nombre del ejercicio *</label>
+        <input type="text" id="new-ex-name" class="form-control" placeholder="Ej: Press Inclinado Mancuernas" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select id="new-ex-type" class="form-control">
+          <option value="Push">Push</option>
+          <option value="Pull">Pull</option>
+          <option value="Legs">Legs</option>
+          <option value="Custom">Custom</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <select id="new-ex-category" class="form-control">
+          <option value="Compuesto">Compuesto</option>
+          <option value="Aislamiento">Aislamiento</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Músculo principal</label>
+        <input type="text" id="new-ex-muscle" class="form-control" placeholder="Ej: Pecho, Dorsal, Cuádriceps..." />
+      </div>
+      <div class="flex gap-1 mt-2" style="justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="closeModal('new-exercise-modal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="createAndAddExercise()">Crear y añadir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/prompt.js"></script>
+<script src="js/gemini.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+<script>
+// ─── STATE ───────────────────────────────────────────────
+let currentType = 'Push';
+let exerciseBlocks = []; // [{id, name, exerciseInfo, sets:[{weight,reps}]}]
+let searchTimeout = null;
+
+// ─── INIT ────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('session-date-display').textContent =
+    new Date().toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' });
+
+  // Sincronizar tipo del tab según la página
+  selectType('Push');
+
+  // Buscador
+  const searchInput = document.getElementById('exercise-search');
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => renderDropdown(searchInput.value.trim()), 150);
+  });
+
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDropdown();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#exercise-search') && !e.target.closest('#exercise-dropdown')) {
+      closeDropdown();
+    }
+  });
+});
+
+// ─── TIPO DE SESIÓN ──────────────────────────────────────
+function selectType(type) {
+  currentType = type;
+  document.querySelectorAll('.type-tab').forEach(tab => {
+    tab.className = 'type-tab';
+    if (tab.dataset.type === type) {
+      tab.className = `type-tab active-${type.toLowerCase()}`;
+    }
+  });
+}
+
+// ─── BUSCADOR ────────────────────────────────────────────
+function renderDropdown(query) {
+  const dropdown = document.getElementById('exercise-dropdown');
+  if (!query) { closeDropdown(); return; }
+
+  const all = getExercises();
+  const filtered = all.filter(e =>
+    e.name.toLowerCase().includes(query.toLowerCase()) ||
+    e.muscle.toLowerCase().includes(query.toLowerCase())
+  ).slice(0, 8);
+
+  let html = filtered.map(ex => `
+    <div class="dropdown-item" onclick="addExerciseBlock('${ex.id}', '${escapeHtml(ex.name)}')">
+      <span>${ex.name}</span>
+      <span class="dropdown-item-meta">${ex.type} · ${ex.category} · ${ex.muscle}</span>
+    </div>
+  `).join('');
+
+  // Opción de crear nuevo
+  const exactMatch = all.find(e => e.name.toLowerCase() === query.toLowerCase());
+  if (!exactMatch) {
+    html += `<div class="dropdown-item add-new-exercise-item" onclick="openNewExerciseModal('${escapeHtml(query)}')">
+      ➕ Crear "${query}" como nuevo ejercicio
+    </div>`;
+  }
+
+  dropdown.innerHTML = html || `<div class="dropdown-item" style="color:var(--text-muted)">Sin resultados para "${query}"</div>`;
+  dropdown.style.display = 'block';
+}
+
+function closeDropdown() {
+  document.getElementById('exercise-dropdown').style.display = 'none';
+}
+
+function openNewExerciseModal(name = '') {
+  closeDropdown();
+  document.getElementById('new-ex-name').value = name;
+  document.getElementById('new-ex-type').value = currentType;
+  openModal('new-exercise-modal');
+}
+
+function createAndAddExercise() {
+  const name = document.getElementById('new-ex-name').value.trim();
+  if (!name) { showToast('El nombre es obligatorio', 'error'); return; }
+
+  const newEx = addExercise({
+    name,
+    type: document.getElementById('new-ex-type').value,
+    category: document.getElementById('new-ex-category').value,
+    muscle: document.getElementById('new-ex-muscle').value.trim(),
+  });
+
+  closeModal('new-exercise-modal');
+  addExerciseBlock(newEx.id, newEx.name, newEx);
+  showToast(`"${name}" añadido correctamente`, 'success');
+}
+
+// ─── EXERCISE BLOCKS ─────────────────────────────────────
+function addExerciseBlock(exId, exName, exInfo = null) {
+  closeDropdown();
+  document.getElementById('exercise-search').value = '';
+
+  // Evitar duplicados
+  if (exerciseBlocks.find(b => b.name.toLowerCase() === exName.toLowerCase())) {
+    showToast(`"${exName}" ya está en la sesión`, 'info');
+    return;
+  }
+
+  const info = exInfo || getExerciseById(exId) || { category: 'Compuesto', muscle: '', type: currentType };
+  const blockId = 'block-' + Date.now();
+  const block = { id: blockId, exId, name: exName, exerciseInfo: info, sets: [{ weight: '', reps: '' }, { weight: '', reps: '' }] };
+  exerciseBlocks.push(block);
+
+  // Quitar empty state
+  const container = document.getElementById('exercise-blocks');
+  const emptyState = container.querySelector('.empty-state');
+  if (emptyState) emptyState.remove();
+
+  const el = document.createElement('div');
+  el.className = 'exercise-block animate-in';
+  el.id = blockId;
+  el.innerHTML = buildBlockHTML(block);
+  container.appendChild(el);
+}
+
+function buildBlockHTML(block) {
+  const info = block.exerciseInfo;
+  const typeColor = getTypeColor(info.type || currentType);
+  const setsRows = block.sets.map((set, i) => buildSetRow(block.id, i, set.weight, set.reps)).join('');
+
+  return `
+    <div class="exercise-block-header">
+      <div>
+        <div class="exercise-name" style="color:${typeColor}">${block.name}</div>
+        <div class="exercise-meta">${info.category || ''} · ${info.muscle || ''}</div>
+      </div>
+      <div class="flex gap-1 items-center">
+        ${getTypeBadge(info.type || currentType)}
+        <button class="btn btn-icon btn-ghost" title="Eliminar ejercicio" onclick="removeBlock('${block.id}')">🗑️</button>
+      </div>
+    </div>
+    <div class="exercise-block-body">
+      <table class="sets-table">
+        <thead>
+          <tr>
+            <th style="width:40px">#</th>
+            <th>Peso (kg)</th>
+            <th>Reps</th>
+            <th style="width:40px"></th>
+          </tr>
+        </thead>
+        <tbody id="sets-${block.id}">
+          ${setsRows}
+        </tbody>
+      </table>
+      <button class="btn btn-ghost btn-sm mt-2" onclick="addSet('${block.id}')">➕ Añadir serie</button>
+    </div>
+  `;
+}
+
+function buildSetRow(blockId, index, weight = '', reps = '') {
+  return `
+    <tr id="row-${blockId}-${index}">
+      <td class="set-num">${index + 1}</td>
+      <td><input type="number" min="0" step="0.25" placeholder="kg" value="${weight}"
+           onchange="updateSet('${blockId}', ${index}, 'weight', this.value)"
+           oninput="updateSet('${blockId}', ${index}, 'weight', this.value)" /></td>
+      <td><input type="number" min="0" step="1" placeholder="reps" value="${reps}"
+           onchange="updateSet('${blockId}', ${index}, 'reps', this.value)"
+           oninput="updateSet('${blockId}', ${index}, 'reps', this.value)" /></td>
+      <td><button class="btn btn-icon btn-ghost btn-sm" style="font-size:0.75rem"
+           onclick="removeSet('${blockId}', ${index})">✕</button></td>
+    </tr>
+  `;
+}
+
+function addSet(blockId) {
+  const block = exerciseBlocks.find(b => b.id === blockId);
+  if (!block) return;
+  const index = block.sets.length;
+  block.sets.push({ weight: '', reps: '' });
+  const tbody = document.getElementById(`sets-${blockId}`);
+  tbody.insertAdjacentHTML('beforeend', buildSetRow(blockId, index));
+  refreshSetNumbers(blockId);
+}
+
+function removeSet(blockId, index) {
+  const block = exerciseBlocks.find(b => b.id === blockId);
+  if (!block || block.sets.length <= 1) return;
+  block.sets.splice(index, 1);
+  rerenderBlock(blockId);
+}
+
+function updateSet(blockId, index, field, value) {
+  const block = exerciseBlocks.find(b => b.id === blockId);
+  if (!block || !block.sets[index]) return;
+  if (field === 'reps') {
+    block.sets[index][field] = parseInt(value) || 0;
+  } else {
+    block.sets[index][field] = parseFloat(value) || 0;
+  }
+}
+
+function removeBlock(blockId) {
+  exerciseBlocks = exerciseBlocks.filter(b => b.id !== blockId);
+  const el = document.getElementById(blockId);
+  if (el) el.remove();
+
+  if (exerciseBlocks.length === 0) {
+    document.getElementById('exercise-blocks').innerHTML = `
+      <div class="empty-state" style="padding:2rem">
+        <div class="empty-state-icon">➕</div>
+        <div class="empty-state-title">Busca y añade ejercicios arriba</div>
+      </div>`;
+  }
+}
+
+function rerenderBlock(blockId) {
+  const block = exerciseBlocks.find(b => b.id === blockId);
+  if (!block) return;
+  const el = document.getElementById(blockId);
+  if (el) el.innerHTML = buildBlockHTML(block);
+}
+
+function refreshSetNumbers(blockId) {
+  const block = exerciseBlocks.find(b => b.id === blockId);
+  if (!block) return;
+  const tbody = document.getElementById(`sets-${blockId}`);
+  if (!tbody) return;
+  tbody.querySelectorAll('.set-num').forEach((cell, i) => { cell.textContent = i + 1; });
+}
+
+// ─── GUARDAR SESIÓN ──────────────────────────────────────
+async function saveWorkout() {
+  if (exerciseBlocks.length === 0) {
+    showToast('Añade al menos un ejercicio', 'error');
+    return;
+  }
+
+  // Validar que hay al menos un set con datos
+  const hasData = exerciseBlocks.some(b =>
+    b.sets.some(s => s.weight !== '' && s.reps !== '')
+  );
+  if (!hasData) {
+    showToast('Introduce pesos y repeticiones en al menos una serie', 'error');
+    return;
+  }
+
+  const saveBtn = document.getElementById('save-btn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = '💾 Guardando...';
+
+  // Limpiar sets vacíos
+  const exercises = exerciseBlocks.map(b => ({
+    exerciseId: b.exId,
+    name: b.name,
+    sets: b.sets.filter(s => s.weight !== '' || s.reps !== '').map(s => ({
+      weight: parseFloat(s.weight) || 0,
+      reps:   parseInt(s.reps)    || 0,
+    })),
+  }));
+
+  const session = saveSession({
+    type: currentType,
+    exercises,
+    notes: document.getElementById('session-notes').value.trim(),
+  });
+
+  showToast('Sesión guardada correctamente ✓', 'success');
+  saveBtn.textContent = '✓ Guardado';
+
+  // Mostrar sección de IA
+  const aiSection = document.getElementById('ai-section');
+  const aiResults = document.getElementById('ai-results');
+  aiSection.style.display = 'block';
+  aiSection.scrollIntoView({ behavior: 'smooth' });
+
+  const apiKey = getApiKey();
+
+  // Generar recomendaciones para cada ejercicio
+  aiResults.innerHTML = exercises.map(ex => `
+    <div class="ai-panel" id="ai-${ex.name.replace(/\s+/g,'-')}">
+      <div class="ai-panel-header">
+        <div class="ai-panel-icon">🤖</div>
+        <div>
+          <div class="ai-panel-title">${ex.name}</div>
+          <div class="ai-panel-subtitle">Analizando historial...</div>
+        </div>
+      </div>
+      <div class="ai-loading">
+        <div class="spinner"></div>
+        <div class="ai-loading-text">La IA está analizando tu progresión...</div>
+      </div>
+    </div>
+  `).join('');
+
+  for (const ex of exercises) {
+    const panelId = `ai-${ex.name.replace(/\s+/g,'-')}`;
+    const panel = document.getElementById(panelId);
+    const history = getExerciseHistory(ex.name);
+    const exInfo = getExerciseByName(ex.name) || {};
+
+    try {
+      if (!apiKey) {
+        panel.querySelector('.ai-loading').innerHTML = `
+          <div class="api-warning" style="margin:0">
+            ⚠️ Sin API Key configurada.
+            <a onclick="window.location.href='settings.html'" style="margin-left:0.5rem">Configurar Gemini API</a>
+          </div>`;
+        panel.querySelector('.ai-panel-subtitle').textContent = 'Sin IA disponible';
+        continue;
+      }
+
+      const recommendation = await getProgressionRecommendation(ex.name, history, exInfo);
+      panel.querySelector('.ai-loading').outerHTML = `<div class="ai-panel-content">${recommendation}</div>`;
+      panel.querySelector('.ai-panel-subtitle').textContent = `Basado en ${history.length} sesión${history.length !== 1 ? 'es' : ''} registradas`;
+
+    } catch (err) {
+      const msg = getErrorMessage(err.message);
+      panel.querySelector('.ai-loading').innerHTML = `
+        <div style="color:var(--danger);font-size:0.85rem">⚠️ ${msg}</div>`;
+    }
+  }
+}
+
+// ─── UTIL ────────────────────────────────────────────────
+function escapeHtml(str) {
+  return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>

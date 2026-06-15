@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Historial completo de tus entrenamientos en el gimnasio con gráficas de progresión de volumen." />
+  <title>Gym Progression — Historial</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ── SIDEBAR ── -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🏋️</div>
+      <div class="sidebar-logo-text">
+        <strong>Gym Progression</strong>
+        <span>Diario de entrenamiento</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Principal</div>
+      <a class="nav-item" href="index.html" data-page="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <a class="nav-item" href="workout.html" data-page="workout.html"><span class="nav-icon">💪</span> Registrar Entrenamiento</a>
+      <a class="nav-item" href="history.html" data-page="history.html"><span class="nav-icon">📅</span> Historial</a>
+      <a class="nav-item" href="exercises.html" data-page="exercises.html"><span class="nav-icon">🏋️</span> Ejercicios</a>
+    </div>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="settings.html" data-page="settings.html"><span class="nav-icon">⚙️</span> Configuración</a>
+    </div>
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <main class="main-content">
+    <div class="page-container">
+
+      <div class="page-header animate-in">
+        <div class="page-header-left">
+          <h1 class="page-title">Historial</h1>
+          <p class="page-subtitle" id="sessions-count">Cargando...</p>
+        </div>
+        <a href="workout.html" class="btn btn-primary">
+          ➕ Nueva sesión
+        </a>
+      </div>
+
+      <!-- Filtros -->
+      <div class="flex gap-1 mb-3 animate-in animate-delay-1" style="align-items:center;flex-wrap:wrap">
+        <div class="type-tabs" style="flex:none">
+          <button class="type-tab active-push" id="filter-all" data-filter="all" onclick="setFilter('all')">Todas</button>
+          <button class="type-tab" id="filter-Push" data-filter="Push" onclick="setFilter('Push')">🔴 Push</button>
+          <button class="type-tab" id="filter-Pull" data-filter="Pull" onclick="setFilter('Pull')">🟣 Pull</button>
+          <button class="type-tab" id="filter-Legs" data-filter="Legs" onclick="setFilter('Legs')">🔵 Legs</button>
+        </div>
+        <div class="search-wrapper" style="flex:1;min-width:200px">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="history-search" class="form-control" placeholder="Buscar sesión o ejercicio..." oninput="renderHistory()" />
+        </div>
+      </div>
+
+      <!-- Lista de sesiones -->
+      <div id="sessions-list" class="flex flex-col gap-1 animate-in animate-delay-2"></div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Eliminar sesión</h3>
+      <button class="btn btn-icon btn-ghost" onclick="closeModal('confirm-modal')">✕</button>
+    </div>
+    <p id="confirm-message" style="color:var(--text-secondary);margin-bottom:1.5rem"></p>
+    <div class="flex gap-1" style="justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('confirm-modal')">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-btn">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/prompt.js"></script>
+<script src="js/gemini.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+<script>
+let currentFilter = 'all';
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderHistory();
+});
+
+function setFilter(filter) {
+  currentFilter = filter;
+  // Update tab styles
+  document.querySelectorAll('[data-filter]').forEach(btn => {
+    btn.className = 'type-tab';
+    const f = btn.dataset.filter;
+    if (f === filter) {
+      if (f === 'all') btn.className = 'type-tab active-push';
+      else btn.className = `type-tab active-${f.toLowerCase()}`;
+    }
+  });
+  renderHistory();
+}
+
+function renderHistory() {
+  const sessions = getSessions();
+  const query = document.getElementById('history-search').value.toLowerCase().trim();
+  const container = document.getElementById('sessions-list');
+
+  let filtered = sessions;
+
+  if (currentFilter !== 'all') {
+    filtered = filtered.filter(s => s.type === currentFilter);
+  }
+
+  if (query) {
+    filtered = filtered.filter(s =>
+      s.type.toLowerCase().includes(query) ||
+      s.exercises.some(e => e.name.toLowerCase().includes(query)) ||
+      formatDate(s.date).toLowerCase().includes(query)
+    );
+  }
+
+  document.getElementById('sessions-count').textContent =
+    `${filtered.length} sesión${filtered.length !== 1 ? 'es' : ''} registrada${filtered.length !== 1 ? 's' : ''}`;
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📅</div>
+        <div class="empty-state-title">${sessions.length === 0 ? 'Sin sesiones registradas' : 'Sin resultados'}</div>
+        <div class="empty-state-subtitle">${sessions.length === 0 ? 'Registra tu primer entrenamiento para verlo aquí.' : 'Prueba con otro filtro o término de búsqueda.'}</div>
+        ${sessions.length === 0 ? '<a href="workout.html" class="btn btn-primary mt-2">Registrar entrenamiento</a>' : ''}
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map((s, idx) => {
+    const totalVolume = s.exercises.reduce((acc, ex) => acc + calculateVolume(ex.sets), 0);
+    const totalSets   = s.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
+    const typeColor   = getTypeColor(s.type);
+
+    const exerciseRows = s.exercises.map(ex => {
+      const exVol = calculateVolume(ex.sets);
+      const setsDetail = ex.sets.map((set, i) =>
+        `<span style="display:inline-block;background:var(--bg-input);border-radius:4px;padding:2px 8px;font-size:0.75rem;margin:2px">${set.weight}kg × ${set.reps}</span>`
+      ).join('');
+      return `
+        <div style="padding:0.75rem 0;border-bottom:1px solid var(--border)">
+          <div class="flex items-center justify-between mb-1">
+            <span style="font-weight:600;font-size:0.875rem;color:var(--text-primary)">${ex.name}</span>
+            <span style="font-size:0.75rem;color:var(--text-muted)">${exVol.toFixed(0)} kg vol.</span>
+          </div>
+          <div>${setsDetail}</div>
+        </div>`;
+    }).join('');
+
+    const notesHtml = s.notes ? `<div style="margin-top:0.75rem;padding:0.625rem;background:var(--bg-input);border-radius:var(--radius-sm);font-size:0.8rem;color:var(--text-secondary)">📝 ${s.notes}</div>` : '';
+
+    return `
+      <div class="session-card animate-in" style="animation-delay:${idx * 0.04}s" id="session-${s.id}">
+        <div class="session-card-header" onclick="toggleSession('${s.id}')">
+          <div style="flex:1">
+            <div class="session-date">${formatDate(s.date)}</div>
+            <div class="session-title" style="color:${typeColor}">${s.type}</div>
+            <div class="session-stats">
+              <span>💪 ${s.exercises.length} ejercicio${s.exercises.length !== 1 ? 's' : ''}</span>
+              <span>🔁 ${totalSets} series</span>
+              <span>📦 ${totalVolume.toFixed(0)} kg</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            ${getTypeBadge(s.type)}
+            <button class="session-expand-btn" id="expand-${s.id}">▼</button>
+          </div>
+        </div>
+        <div class="session-card-body" id="body-${s.id}">
+          ${exerciseRows}
+          ${notesHtml}
+          <div class="flex" style="justify-content:flex-end;margin-top:1rem">
+            <button class="btn btn-danger btn-sm" onclick="handleDelete('${s.id}', event)">🗑️ Eliminar sesión</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleSession(id) {
+  const card = document.getElementById(`session-${id}`);
+  const body = document.getElementById(`body-${id}`);
+  const btn  = document.getElementById(`expand-${id}`);
+  if (!card) return;
+  const isOpen = card.classList.contains('expanded');
+  card.classList.toggle('expanded', !isOpen);
+  body.style.display = isOpen ? 'none' : 'block';
+  btn.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function handleDelete(id, e) {
+  e.stopPropagation();
+  confirmDelete('¿Estás seguro de que quieres eliminar esta sesión? Esta acción no se puede deshacer.', () => {
+    deleteSession(id);
+    renderHistory();
+    showToast('Sesión eliminada', 'success');
+  });
+}
+</script>
+</body>
+</html>

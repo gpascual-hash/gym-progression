@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Biblioteca de ejercicios PPL con historial de progresión y análisis de IA para cada ejercicio." />
+  <title>Gym Progression — Ejercicios</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ── SIDEBAR ── -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🏋️</div>
+      <div class="sidebar-logo-text">
+        <strong>Gym Progression</strong>
+        <span>Diario de entrenamiento</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Principal</div>
+      <a class="nav-item" href="index.html" data-page="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <a class="nav-item" href="workout.html" data-page="workout.html"><span class="nav-icon">💪</span> Registrar Entrenamiento</a>
+      <a class="nav-item" href="history.html" data-page="history.html"><span class="nav-icon">📅</span> Historial</a>
+      <a class="nav-item" href="exercises.html" data-page="exercises.html"><span class="nav-icon">🏋️</span> Ejercicios</a>
+    </div>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="settings.html" data-page="settings.html"><span class="nav-icon">⚙️</span> Configuración</a>
+    </div>
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <main class="main-content">
+    <div class="page-container">
+
+      <div class="page-header animate-in">
+        <div class="page-header-left">
+          <h1 class="page-title">Ejercicios</h1>
+          <p class="page-subtitle" id="exercise-count">Cargando...</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('new-ex-modal')">
+          ➕ Nuevo ejercicio
+        </button>
+      </div>
+
+      <!-- Filtros -->
+      <div class="flex gap-1 mb-3 animate-in animate-delay-1" style="flex-wrap:wrap;align-items:center">
+        <div class="type-tabs" style="flex:none">
+          <button class="type-tab active-push" data-filter="all" onclick="setFilter('all')">Todos</button>
+          <button class="type-tab" data-filter="Push" onclick="setFilter('Push')">🔴 Push</button>
+          <button class="type-tab" data-filter="Pull" onclick="setFilter('Pull')">🟣 Pull</button>
+          <button class="type-tab" data-filter="Legs" onclick="setFilter('Legs')">🔵 Legs</button>
+          <button class="type-tab" data-filter="Custom" onclick="setFilter('Custom')">🟢 Custom</button>
+        </div>
+        <div class="search-wrapper" style="flex:1;min-width:200px">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="ex-search" class="form-control" placeholder="Buscar por nombre o músculo..." oninput="renderExercises()" />
+        </div>
+      </div>
+
+      <!-- Lista de ejercicios -->
+      <div id="exercise-list" class="flex flex-col gap-1 animate-in animate-delay-2"></div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Modal: Ver ejercicio -->
+<div class="modal-overlay" id="exercise-detail-modal">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title" id="detail-name">Ejercicio</h3>
+        <div id="detail-meta" style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem"></div>
+      </div>
+      <button class="btn btn-icon btn-ghost" onclick="closeModal('exercise-detail-modal')">✕</button>
+    </div>
+
+    <!-- Gráfica de volumen -->
+    <div class="section-title" style="font-size:0.875rem">Progresión de volumen</div>
+    <div class="chart-container mb-3" style="height:200px">
+      <canvas id="detail-chart"></canvas>
+    </div>
+
+    <!-- Historial de sesiones -->
+    <div class="section-title" style="font-size:0.875rem">Historial de sesiones</div>
+    <div id="detail-history" style="max-height:220px;overflow-y:auto;margin-bottom:1.25rem"></div>
+
+    <!-- Análisis de IA -->
+    <div id="detail-ai-section"></div>
+  </div>
+</div>
+
+<!-- Modal: Nuevo ejercicio -->
+<div class="modal-overlay" id="new-ex-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Nuevo ejercicio personalizado</h3>
+      <button class="btn btn-icon btn-ghost" onclick="closeModal('new-ex-modal')">✕</button>
+    </div>
+    <div class="flex flex-col gap-2">
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input type="text" id="new-name" class="form-control" placeholder="Ej: Press Inclinado Mancuernas" />
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Tipo</label>
+          <select id="new-type" class="form-control">
+            <option value="Push">Push</option>
+            <option value="Pull">Pull</option>
+            <option value="Legs">Legs</option>
+            <option value="Custom">Custom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Categoría</label>
+          <select id="new-category" class="form-control">
+            <option value="Compuesto">Compuesto</option>
+            <option value="Aislamiento">Aislamiento</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Músculo principal</label>
+        <input type="text" id="new-muscle" class="form-control" placeholder="Ej: Pecho, Dorsal, Cuádriceps..." />
+      </div>
+      <div class="flex gap-1 mt-1" style="justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="closeModal('new-ex-modal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="createExercise()">Crear ejercicio</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Confirmar</h3>
+      <button class="btn btn-icon btn-ghost" onclick="closeModal('confirm-modal')">✕</button>
+    </div>
+    <p id="confirm-message" style="color:var(--text-secondary);margin-bottom:1.5rem"></p>
+    <div class="flex gap-1" style="justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('confirm-modal')">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-btn">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/prompt.js"></script>
+<script src="js/gemini.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+<script>
+let currentFilter = 'all';
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderExercises();
+});
+
+function setFilter(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('[data-filter]').forEach(btn => {
+    btn.className = 'type-tab';
+    const f = btn.dataset.filter;
+    if (f === filter) {
+      if (f === 'all') btn.className = 'type-tab active-push';
+      else btn.className = `type-tab active-${f.toLowerCase()}`;
+    }
+  });
+  renderExercises();
+}
+
+function renderExercises() {
+  const exercises = getExercises();
+  const query = document.getElementById('ex-search').value.toLowerCase().trim();
+  const container = document.getElementById('exercise-list');
+
+  let filtered = exercises;
+  if (currentFilter !== 'all') filtered = filtered.filter(e => e.type === currentFilter);
+  if (query) filtered = filtered.filter(e =>
+    e.name.toLowerCase().includes(query) || e.muscle.toLowerCase().includes(query)
+  );
+
+  document.getElementById('exercise-count').textContent =
+    `${filtered.length} ejercicio${filtered.length !== 1 ? 's' : ''}`;
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🏋️</div><div class="empty-state-title">Sin ejercicios</div></div>`;
+    return;
+  }
+
+  const sessions = getSessions();
+
+  container.innerHTML = filtered.map((ex, idx) => {
+    // Contar sesiones con este ejercicio
+    const sessionCount = sessions.filter(s =>
+      s.exercises.some(e => e.name.toLowerCase() === ex.name.toLowerCase())
+    ).length;
+
+    const typeColor = getTypeColor(ex.type);
+
+    return `
+      <div class="exercise-lib-card animate-in" style="animation-delay:${idx * 0.03}s" onclick="openExerciseDetail('${ex.id}')">
+        <div style="flex:1">
+          <div class="exercise-lib-name" style="color:${typeColor}">${ex.name}</div>
+          <div class="exercise-lib-meta">${ex.category} · ${ex.muscle}</div>
+        </div>
+        <div class="flex items-center gap-1">
+          <div class="exercise-lib-sessions">
+            <div style="font-weight:700;font-size:0.95rem">${sessionCount}</div>
+            <div>sesione${sessionCount !== 1 ? 's' : ''}</div>
+          </div>
+          ${getTypeBadge(ex.type)}
+          ${ex.custom ? `<button class="btn btn-icon btn-danger btn-sm" title="Eliminar" onclick="handleDeleteEx('${ex.id}', event)">🗑️</button>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function openExerciseDetail(exId) {
+  const ex = getExerciseById(exId);
+  if (!ex) return;
+
+  document.getElementById('detail-name').textContent = ex.name;
+  document.getElementById('detail-meta').textContent = `${ex.type} · ${ex.category} · ${ex.muscle}`;
+
+  const history = getExerciseHistory(ex.name, 20);
+
+  // Historia
+  const histContainer = document.getElementById('detail-history');
+  if (history.length === 0) {
+    histContainer.innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;padding:1rem 0">Sin sesiones registradas con este ejercicio aún.</div>`;
+  } else {
+    histContainer.innerHTML = [...history].reverse().map(h => {
+      const setsText = h.sets.map(s => `${s.weight}kg×${s.reps}`).join(' | ');
+      return `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.8rem">
+          <span style="color:var(--text-muted)">${formatDateShort(h.date)}</span>
+          <span style="color:var(--text-primary)">${setsText}</span>
+          <span style="color:var(--accent);font-weight:700">${h.totalVolume.toFixed(0)} kg</span>
+        </div>`;
+    }).join('');
+  }
+
+  // Gráfica
+  openModal('exercise-detail-modal');
+  setTimeout(() => {
+    const canvas = document.getElementById('detail-chart');
+    const color = getTypeColor(ex.type);
+    if (canvas) {
+      drawVolumeChart(canvas, history, color);
+      if (history.length > 1) addChartTooltip(canvas, history, color);
+    }
+  }, 100);
+
+  // IA
+  const aiSection = document.getElementById('detail-ai-section');
+  if (history.length >= 2 && getApiKey()) {
+    aiSection.innerHTML = `
+      <div class="ai-panel">
+        <div class="ai-panel-header">
+          <div class="ai-panel-icon">🤖</div>
+          <div>
+            <div class="ai-panel-title">Análisis de IA</div>
+            <div class="ai-panel-subtitle">Analizando tu progresión...</div>
+          </div>
+        </div>
+        <div class="ai-loading"><div class="spinner"></div></div>
+      </div>`;
+
+    try {
+      const insight = await getExerciseInsight(ex.name, history, ex);
+      if (insight) {
+        aiSection.innerHTML = `
+          <div class="ai-panel">
+            <div class="ai-panel-header">
+              <div class="ai-panel-icon">🤖</div>
+              <div>
+                <div class="ai-panel-title">Análisis de IA</div>
+                <div class="ai-panel-subtitle">Basado en ${history.length} sesiones</div>
+              </div>
+            </div>
+            <div class="ai-panel-content">${insight}</div>
+          </div>`;
+      }
+    } catch (e) {
+      aiSection.innerHTML = '';
+    }
+  } else {
+    aiSection.innerHTML = '';
+  }
+}
+
+function createExercise() {
+  const name = document.getElementById('new-name').value.trim();
+  if (!name) { showToast('El nombre es obligatorio', 'error'); return; }
+  addExercise({
+    name,
+    type: document.getElementById('new-type').value,
+    category: document.getElementById('new-category').value,
+    muscle: document.getElementById('new-muscle').value.trim(),
+  });
+  closeModal('new-ex-modal');
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-muscle').value = '';
+  renderExercises();
+  showToast(`"${name}" creado correctamente`, 'success');
+}
+
+function handleDeleteEx(id, e) {
+  e.stopPropagation();
+  const ex = getExerciseById(id);
+  if (!ex) return;
+  confirmDelete(`¿Eliminar "${ex.name}"? Solo puedes eliminar ejercicios personalizados.`, () => {
+    deleteExercise(id);
+    renderExercises();
+    showToast(`"${ex.name}" eliminado`, 'success');
+  });
+}
+</script>
+</body>
+</html>

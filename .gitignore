@@ -1,0 +1,18 @@
+# Gym Progression — .gitignore
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# No subir datos locales de prueba
+# (los datos reales se guardan en localStorage del navegador, no en archivos)

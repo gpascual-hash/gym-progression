@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Dashboard de tu progresión en el gimnasio — resumen semanal y acceso rápido al registro de entrenamientos." />
+  <title>Gym Progression — Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ── SIDEBAR ── -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🏋️</div>
+      <div class="sidebar-logo-text">
+        <strong>Gym Progression</strong>
+        <span>Diario de entrenamiento</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Principal</div>
+      <a class="nav-item" href="index.html" data-page="index.html">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+      <a class="nav-item" href="workout.html" data-page="workout.html">
+        <span class="nav-icon">💪</span> Registrar Entrenamiento
+      </a>
+      <a class="nav-item" href="history.html" data-page="history.html">
+        <span class="nav-icon">📅</span> Historial
+      </a>
+      <a class="nav-item" href="exercises.html" data-page="exercises.html">
+        <span class="nav-icon">🏋️</span> Ejercicios
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <a class="nav-item" href="settings.html" data-page="settings.html">
+        <span class="nav-icon">⚙️</span> Configuración
+      </a>
+    </div>
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <main class="main-content">
+    <div class="page-container">
+
+      <!-- Header -->
+      <div class="page-header animate-in">
+        <div class="page-header-left">
+          <h1 class="page-title" id="greeting">Buenos días 💪</h1>
+          <p class="page-subtitle" id="date-display"></p>
+        </div>
+        <a href="workout.html" class="btn btn-primary btn-lg">
+          <span>➕</span> Registrar Entrenamiento
+        </a>
+      </div>
+
+      <!-- API Key Warning -->
+      <div id="api-warning" class="api-warning" style="display:none">
+        ⚠️ No tienes una API Key de Gemini configurada.
+        <a onclick="window.location.href='settings.html'">Configúrala aquí</a>
+        para obtener recomendaciones de IA.
+      </div>
+
+      <!-- Stats de la semana -->
+      <div class="section-title animate-in animate-delay-1">Esta semana</div>
+      <div class="grid-4 mb-3 animate-in animate-delay-1" id="week-stats">
+        <div class="card stat-card">
+          <div class="stat-icon" style="background:rgba(249,115,22,0.15);font-size:1.5rem">🗓️</div>
+          <div class="stat-value" id="stat-days">0</div>
+          <div class="stat-label">Días entrenados</div>
+        </div>
+        <div class="card stat-card push-accent">
+          <div class="stat-icon">🔴</div>
+          <div class="stat-value" id="stat-push" style="color:var(--push-color)">0</div>
+          <div class="stat-label">Sesiones Push</div>
+        </div>
+        <div class="card stat-card pull-accent">
+          <div class="stat-icon" style="font-size:1.5rem">🟣</div>
+          <div class="stat-value" id="stat-pull" style="color:var(--pull-color)">0</div>
+          <div class="stat-label">Sesiones Pull</div>
+        </div>
+        <div class="card stat-card legs-accent">
+          <div class="stat-icon" style="font-size:1.5rem">🔵</div>
+          <div class="stat-value" id="stat-legs" style="color:var(--legs-color)">0</div>
+          <div class="stat-label">Sesiones Legs</div>
+        </div>
+      </div>
+
+      <!-- Stats totales + gráfica semanal -->
+      <div class="grid-2 mb-3 animate-in animate-delay-2">
+        <div class="card">
+          <div class="section-title" style="margin-bottom:1.25rem">Volumen semanal</div>
+          <div class="chart-container" style="height:160px">
+            <canvas id="week-chart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title" style="margin-bottom:1.25rem">Totales históricos</div>
+          <div class="flex flex-col gap-2" id="total-stats">
+            <div class="flex items-center justify-between" style="padding:0.625rem 0;border-bottom:1px solid var(--border)">
+              <span style="color:var(--text-secondary);font-size:0.875rem">Sesiones totales</span>
+              <span id="total-sessions" style="font-weight:700;font-size:1.1rem">0</span>
+            </div>
+            <div class="flex items-center justify-between" style="padding:0.625rem 0;border-bottom:1px solid var(--border)">
+              <span style="color:var(--text-secondary);font-size:0.875rem">Volumen total levantado</span>
+              <span id="total-volume" style="font-weight:700;font-size:1.1rem;color:var(--accent)">0 kg</span>
+            </div>
+            <div class="flex items-center justify-between" style="padding:0.625rem 0">
+              <span style="color:var(--text-secondary);font-size:0.875rem">Series totales</span>
+              <span id="total-sets" style="font-weight:700;font-size:1.1rem">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Últimas sesiones -->
+      <div class="section-title animate-in animate-delay-3">Últimas sesiones</div>
+      <div id="recent-sessions" class="flex flex-col gap-1 animate-in animate-delay-3">
+        <div class="empty-state">
+          <div class="empty-state-icon">🏋️</div>
+          <div class="empty-state-title">Sin sesiones registradas aún</div>
+          <div class="empty-state-subtitle">Registra tu primer entrenamiento para ver el historial aquí</div>
+          <a href="workout.html" class="btn btn-primary mt-2">Empezar ahora</a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Confirmar acción</h3>
+      <button class="btn btn-icon btn-ghost" onclick="closeModal('confirm-modal')">✕</button>
+    </div>
+    <p id="confirm-message" style="color:var(--text-secondary);margin-bottom:1.5rem"></p>
+    <div class="flex gap-1 justify-between">
+      <button class="btn btn-secondary" onclick="closeModal('confirm-modal')">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-btn">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/prompt.js"></script>
+<script src="js/gemini.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Saludo dinámico
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Buenos días' : hour < 19 ? 'Buenas tardes' : 'Buenas noches';
+  document.getElementById('greeting').textContent = `${greeting} 💪`;
+
+  // Fecha
+  document.getElementById('date-display').textContent =
+    new Date().toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+  // API key warning
+  if (!getApiKey()) {
+    document.getElementById('api-warning').style.display = 'flex';
+  }
+
+  // Stats de la semana
+  const weekStats = getWeekStats();
+  document.getElementById('stat-days').textContent = weekStats.days;
+  document.getElementById('stat-push').textContent = weekStats.push;
+  document.getElementById('stat-pull').textContent = weekStats.pull;
+  document.getElementById('stat-legs').textContent = weekStats.legs;
+
+  // Stats totales
+  const totals = getTotalStats();
+  document.getElementById('total-sessions').textContent = totals.sessions;
+  document.getElementById('total-volume').textContent =
+    totals.totalVolume >= 1000
+      ? `${(totals.totalVolume / 1000).toFixed(1)} t`
+      : `${totals.totalVolume.toFixed(0)} kg`;
+  document.getElementById('total-sets').textContent = totals.totalSets;
+
+  // Gráfica de barras semanal
+  const sessions = getSessions();
+  const now = new Date();
+  const dayOfWeek = (now.getDay() + 6) % 7; // 0=lunes
+  const weekData = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now);
+    d.setDate(now.getDate() - dayOfWeek + i);
+    const dateStr = d.toISOString().split('T')[0];
+    return sessions.filter(s => s.date.startsWith(dateStr));
+  });
+
+  const canvas = document.getElementById('week-chart');
+  if (canvas) {
+    setTimeout(() => drawWeekBarChart(canvas, weekData), 100);
+  }
+
+  // Últimas sesiones
+  const recentSessions = sessions.slice(0, 5);
+  const container = document.getElementById('recent-sessions');
+  if (recentSessions.length > 0) {
+    container.innerHTML = recentSessions.map(s => {
+      const exList = s.exercises.map(e => e.name).join(', ');
+      const totalVol = s.exercises.reduce((acc, ex) => acc + calculateVolume(ex.sets), 0);
+      const exCount  = s.exercises.length;
+      const typeColor = getTypeColor(s.type);
+      return `
+        <div class="session-card animate-in" onclick="window.location.href='history.html'">
+          <div class="card-glow"></div>
+          <div class="session-card-header">
+            <div>
+              <div class="session-date">${formatDateReadable(s.date)} · ${new Date(s.date).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</div>
+              <div class="session-title" style="color:${typeColor}">${s.type}</div>
+              <div class="session-stats">
+                <span>💪 ${exCount} ejercicio${exCount>1?'s':''}</span>
+                <span>📦 ${totalVol.toFixed(0)} kg volumen</span>
+              </div>
+            </div>
+            ${getTypeBadge(s.type)}
+          </div>
+          <div style="padding:0 1.25rem 1rem;font-size:0.8rem;color:var(--text-muted)">${exList}</div>
+        </div>`;
+    }).join('');
+  }
+});
+</script>
+</body>
+</html>

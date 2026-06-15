@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Configuración de Gym Progression: API Key de Gemini, exportar e importar datos." />
+  <title>Gym Progression — Configuración</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ── SIDEBAR ── -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🏋️</div>
+      <div class="sidebar-logo-text">
+        <strong>Gym Progression</strong>
+        <span>Diario de entrenamiento</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Principal</div>
+      <a class="nav-item" href="index.html" data-page="index.html"><span class="nav-icon">📊</span> Dashboard</a>
+      <a class="nav-item" href="workout.html" data-page="workout.html"><span class="nav-icon">💪</span> Registrar Entrenamiento</a>
+      <a class="nav-item" href="history.html" data-page="history.html"><span class="nav-icon">📅</span> Historial</a>
+      <a class="nav-item" href="exercises.html" data-page="exercises.html"><span class="nav-icon">🏋️</span> Ejercicios</a>
+    </div>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="settings.html" data-page="settings.html"><span class="nav-icon">⚙️</span> Configuración</a>
+    </div>
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <main class="main-content">
+    <div class="page-container">
+
+      <div class="page-header animate-in">
+        <div class="page-header-left">
+          <h1 class="page-title">Configuración</h1>
+          <p class="page-subtitle">Personaliza tu experiencia y gestiona tus datos</p>
+        </div>
+      </div>
+
+      <!-- ─── API KEY DE GEMINI ─── -->
+      <div class="settings-section animate-in animate-delay-1">
+        <div class="settings-section-header">
+          <div class="settings-section-title">🤖 Google Gemini API</div>
+          <div class="settings-section-desc">Necesaria para las recomendaciones de sobrecarga progresiva con IA</div>
+        </div>
+
+        <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:1rem">
+          <div style="width:100%">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+              <div id="api-status-dot" style="width:10px;height:10px;border-radius:50%;background:var(--text-muted)"></div>
+              <span id="api-status-label" style="font-size:0.8rem;color:var(--text-muted)">Sin configurar</span>
+            </div>
+            <div style="display:flex;gap:0.5rem;width:100%">
+              <div style="position:relative;flex:1">
+                <input
+                  type="password"
+                  id="api-key-input"
+                  class="form-control"
+                  placeholder="AIza..."
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+                <button
+                  id="toggle-key-visibility"
+                  onclick="toggleKeyVisibility()"
+                  style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem"
+                  title="Mostrar/ocultar"
+                >👁️</button>
+              </div>
+              <button class="btn btn-primary" onclick="saveApiKey()">Guardar</button>
+              <button class="btn btn-secondary" id="test-btn" onclick="testConnection()">Probar</button>
+            </div>
+          </div>
+
+          <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:1rem;width:100%;font-size:0.8rem;color:var(--text-secondary);line-height:1.7">
+            <strong style="color:var(--text-primary)">¿Cómo obtener tu API Key gratuita?</strong><br>
+            1. Ve a <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent)">aistudio.google.com/app/apikey</a><br>
+            2. Inicia sesión con tu cuenta de Google<br>
+            3. Haz clic en "Crear API Key"<br>
+            4. Copia la clave y pégala aquí<br>
+            <span style="color:var(--success)">✓ El modelo gemini-1.5-flash es gratuito hasta 1500 peticiones/día</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── PARÁMETROS DE ENTRENAMIENTO ─── -->
+      <div class="settings-section animate-in animate-delay-2">
+        <div class="settings-section-header">
+          <div class="settings-section-title">💪 Parámetros de entrenamiento</div>
+          <div class="settings-section-desc">Usados por la IA para personalizar las recomendaciones</div>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Rango de repeticiones objetivo</div>
+            <div class="settings-row-desc">Mínimo y máximo de reps por serie para hipertrofia</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem">
+            <input type="number" id="rep-min" class="form-control" style="width:70px;text-align:center" min="1" max="30" value="8" />
+            <span style="color:var(--text-muted)">–</span>
+            <input type="number" id="rep-max" class="form-control" style="width:70px;text-align:center" min="1" max="50" value="12" />
+            <button class="btn btn-secondary btn-sm" onclick="saveRepRange()">Guardar</button>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Split actual</div>
+            <div class="settings-row-desc">Estructura de entrenamiento semanal</div>
+          </div>
+          <span style="font-size:0.875rem;color:var(--text-secondary)">Push / Pull / Legs (PPL)</span>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Nivel de experiencia</div>
+            <div class="settings-row-desc">Influye en los incrementos de peso sugeridos</div>
+          </div>
+          <span style="font-size:0.875rem;color:var(--text-secondary)">Avanzado (3+ años)</span>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Unidad de peso</div>
+          </div>
+          <span style="font-size:0.875rem;font-weight:700;color:var(--accent)">kg</span>
+        </div>
+      </div>
+
+      <!-- ─── DATOS ─── -->
+      <div class="settings-section animate-in animate-delay-3">
+        <div class="settings-section-header">
+          <div class="settings-section-title">💾 Gestión de datos</div>
+          <div class="settings-section-desc">Tus datos se almacenan localmente en este navegador</div>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Exportar datos</div>
+            <div class="settings-row-desc">Descarga un backup en formato JSON de todos tus entrenamientos</div>
+          </div>
+          <button class="btn btn-secondary" onclick="handleExport()">📥 Exportar JSON</button>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Importar datos</div>
+            <div class="settings-row-desc">Restaura un backup exportado anteriormente</div>
+          </div>
+          <div>
+            <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)" />
+            <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">📤 Importar JSON</button>
+          </div>
+        </div>
+
+        <div class="settings-row" id="data-summary-row">
+          <div>
+            <div class="settings-row-label">Resumen de datos guardados</div>
+          </div>
+          <div id="data-summary" style="font-size:0.8rem;color:var(--text-secondary);text-align:right"></div>
+        </div>
+      </div>
+
+      <!-- ─── ZONA PELIGROSA ─── -->
+      <div class="settings-section animate-in animate-delay-3" style="border-color:rgba(239,68,68,0.2)">
+        <div class="settings-section-header" style="background:rgba(239,68,68,0.05)">
+          <div class="settings-section-title" style="color:var(--danger)">⚠️ Zona peligrosa</div>
+          <div class="settings-section-desc">Acciones irreversibles</div>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Borrar todos los datos</div>
+            <div class="settings-row-desc">Elimina todo el historial de entrenamientos y ejercicios personalizados. La API Key se conserva.</div>
+          </div>
+          <button class="btn btn-danger" onclick="handleClearAll()">🗑️ Borrar todo</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Confirmar acción</h3>
+      <button class="btn btn-icon btn-ghost" onclick="closeModal('confirm-modal')">✕</button>
+    </div>
+    <p id="confirm-message" style="color:var(--text-secondary);margin-bottom:1.5rem"></p>
+    <div class="flex gap-1" style="justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeModal('confirm-modal')">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-btn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/prompt.js"></script>
+<script src="js/gemini.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  loadSettings();
+  updateDataSummary();
+});
+
+function loadSettings() {
+  const settings = getSettings();
+
+  // API Key
+  if (settings.geminiApiKey) {
+    document.getElementById('api-key-input').value = settings.geminiApiKey;
+    setApiStatus('configured');
+  }
+
+  // Rep range
+  if (settings.repRangeMin) document.getElementById('rep-min').value = settings.repRangeMin;
+  if (settings.repRangeMax) document.getElementById('rep-max').value = settings.repRangeMax;
+}
+
+function setApiStatus(status) {
+  const dot   = document.getElementById('api-status-dot');
+  const label = document.getElementById('api-status-label');
+  const statusMap = {
+    configured: { color: 'var(--success)',  text: 'API Key configurada' },
+    valid:      { color: 'var(--success)',  text: 'Conexión verificada ✓' },
+    invalid:    { color: 'var(--danger)',   text: 'API Key inválida' },
+    testing:    { color: 'var(--warning)',  text: 'Probando conexión...' },
+    none:       { color: 'var(--text-muted)', text: 'Sin configurar' },
+  };
+  const s = statusMap[status] || statusMap.none;
+  dot.style.background   = s.color;
+  label.style.color      = s.color;
+  label.textContent      = s.text;
+}
+
+function toggleKeyVisibility() {
+  const input = document.getElementById('api-key-input');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key) {
+    showToast('Escribe una API Key primero', 'error');
+    return;
+  }
+  saveSettings({ geminiApiKey: key });
+  setApiStatus('configured');
+  showToast('API Key guardada correctamente ✓', 'success');
+}
+
+async function testConnection() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key) {
+    showToast('Guarda una API Key primero', 'error');
+    return;
+  }
+  const btn = document.getElementById('test-btn');
+  btn.disabled = true;
+  btn.textContent = 'Probando...';
+  setApiStatus('testing');
+
+  const result = await testApiConnection(key);
+  setApiStatus(result.ok ? 'valid' : 'invalid');
+  showToast(result.message, result.ok ? 'success' : 'error');
+  btn.disabled = false;
+  btn.textContent = 'Probar';
+}
+
+function saveRepRange() {
+  const min = parseInt(document.getElementById('rep-min').value);
+  const max = parseInt(document.getElementById('rep-max').value);
+  if (min >= max || min < 1 || max > 50) {
+    showToast('Rango inválido. El mínimo debe ser menor al máximo.', 'error');
+    return;
+  }
+  saveSettings({ repRangeMin: min, repRangeMax: max });
+  showToast(`Rango actualizado: ${min}–${max} reps ✓`, 'success');
+}
+
+function updateDataSummary() {
+  const sessions  = getSessions();
+  const exercises = getExercises();
+  const custom    = exercises.filter(e => e.custom).length;
+  const totalVol  = sessions.reduce((acc, s) =>
+    acc + s.exercises.reduce((a2, ex) => a2 + calculateVolume(ex.sets), 0), 0);
+
+  document.getElementById('data-summary').innerHTML = `
+    <div>${sessions.length} sesión${sessions.length !== 1 ? 'es' : ''}</div>
+    <div>${exercises.length} ejercicios (${custom} personalizados)</div>
+    <div style="color:var(--accent);font-weight:700">${(totalVol/1000).toFixed(1)} toneladas levantadas</div>`;
+}
+
+function handleExport() {
+  exportData();
+  showToast('Backup exportado correctamente', 'success');
+}
+
+function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const ok = importData(e.target.result);
+    if (ok) {
+      showToast('Datos importados correctamente ✓', 'success');
+      updateDataSummary();
+    } else {
+      showToast('Error al importar. Verifica que el archivo sea válido.', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function handleClearAll() {
+  confirmDelete(
+    '¿Estás seguro? Se eliminarán TODOS los entrenamientos e historial. Esta acción no se puede deshacer. (La API Key se conservará)',
+    () => {
+      const apiKey = getApiKey();
+      clearAllData();
+      if (apiKey) saveSettings({ geminiApiKey: apiKey });
+      updateDataSummary();
+      showToast('Todos los datos han sido eliminados', 'success');
+    }
+  );
+}
+</script>
+</body>
+</html>

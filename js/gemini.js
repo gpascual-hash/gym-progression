@@ -4,7 +4,7 @@
  */
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-const GEMINI_MODEL    = 'gemini-1.5-flash-latest';
+let currentModel      = 'gemini-1.5-flash'; // Start with flash
 
 /**
  * Llama a la API de Gemini con un prompt
@@ -13,24 +13,11 @@ const GEMINI_MODEL    = 'gemini-1.5-flash-latest';
  * @returns {Promise<string>} La respuesta de la IA
  */
 async function callGemini(prompt, apiKey) {
-  if (!apiKey) {
-    throw new Error('NO_API_KEY');
-  }
-
-  const url = `${GEMINI_API_BASE}/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+  if (!apiKey) throw new Error('NO_API_KEY');
 
   const body = {
-    contents: [
-      {
-        parts: [{ text: prompt }]
-      }
-    ],
-    generationConfig: {
-      temperature: 0.7,
-      topK: 40,
-      topP: 0.95,
-      maxOutputTokens: 512,
-    },
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.7, topK: 40, topP: 0.95, maxOutputTokens: 512 },
     safetySettings: [
       { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
       { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
@@ -39,32 +26,48 @@ async function callGemini(prompt, apiKey) {
     ],
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  const tryModel = async (modelName) => {
+    const url = `${GEMINI_API_BASE}/${modelName}:generateContent?key=${apiKey}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMsg = errorData?.error?.message || `HTTP ${response.status}`;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMsg = errorData?.error?.message || `HTTP ${response.status}`;
 
-    if (response.status === 400) throw new Error(`API_BAD_REQUEST: ${errorMsg}`);
-    if (response.status === 401 || response.status === 403) throw new Error('API_INVALID_KEY');
-    if (response.status === 429) throw new Error('API_RATE_LIMIT');
-    if (response.status >= 500) throw new Error('API_SERVER_ERROR');
+      // Si el modelo no existe (404), lanzamos error especial para hacer fallback
+      if (response.status === 404 && errorMsg.includes('is not found')) {
+        throw new Error('MODEL_NOT_FOUND');
+      }
 
-    throw new Error(`API_ERROR: ${errorMsg}`);
+      if (response.status === 400) throw new Error(`API_BAD_REQUEST: ${errorMsg}`);
+      if (response.status === 401 || response.status === 403) throw new Error('API_INVALID_KEY');
+      if (response.status === 429) throw new Error('API_RATE_LIMIT');
+      if (response.status >= 500) throw new Error('API_SERVER_ERROR');
+      throw new Error(`API_ERROR: ${errorMsg}`);
+    }
+    return response.json();
+  };
+
+  let data;
+  try {
+    data = await tryModel(currentModel);
+  } catch (err) {
+    if (err.message === 'MODEL_NOT_FOUND') {
+      console.log(`${currentModel} falló. Intentando con gemini-pro...`);
+      currentModel = 'gemini-pro'; // Fallback permanente para la sesión
+      data = await tryModel(currentModel);
+    } else {
+      throw err;
+    }
   }
 
-  const data = await response.json();
-
-  // Extraer el texto de la respuesta
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    throw new Error('API_EMPTY_RESPONSE');
-  }
-
+  if (!text) throw new Error('API_EMPTY_RESPONSE');
+  
   return text.trim();
 }
 

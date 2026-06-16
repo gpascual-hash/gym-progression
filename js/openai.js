@@ -1,71 +1,53 @@
 /**
- * gemini.js — Integración con Google Gemini API
+ * openai.js — Integración con OpenAI API
  * Gestiona las llamadas a la API y el manejo de errores
  */
 
-const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-let currentModel      = 'gemini-1.5-flash'; // Start with flash
+const OPENAI_API_BASE = 'https://api.openai.com/v1/chat/completions';
+let currentModel      = 'gpt-4o-mini';
 
 /**
- * Llama a la API de Gemini con un prompt
+ * Llama a la API de OpenAI con un prompt
  * @param {string} prompt - El prompt a enviar
- * @param {string} apiKey - La clave de API de Google Gemini
+ * @param {string} apiKey - La clave de API de OpenAI
  * @returns {Promise<string>} La respuesta de la IA
  */
-async function callGemini(prompt, apiKey) {
+async function callOpenAI(prompt, apiKey) {
   if (!apiKey) throw new Error('NO_API_KEY');
 
   const body = {
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { temperature: 0.7, topK: 40, topP: 0.95, maxOutputTokens: 512 },
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-    ],
+    model: currentModel,
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.7,
+    max_tokens: 512,
   };
 
-  const tryModel = async (modelName) => {
-    const url = `${GEMINI_API_BASE}/${modelName}:generateContent?key=${apiKey}`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+  const response = await fetch(OPENAI_API_BASE, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(body),
+  });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMsg = errorData?.error?.message || `HTTP ${response.status}`;
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const errorMsg = errorData?.error?.message || `HTTP ${response.status}`;
 
-      // Si el modelo no existe (404), lanzamos error especial para hacer fallback
-      if (response.status === 404 && errorMsg.includes('is not found')) {
-        throw new Error('MODEL_NOT_FOUND');
-      }
-
-      if (response.status === 400) throw new Error(`API_BAD_REQUEST: ${errorMsg}`);
-      if (response.status === 401 || response.status === 403) throw new Error('API_INVALID_KEY');
-      if (response.status === 429) throw new Error('API_RATE_LIMIT');
-      if (response.status >= 500) throw new Error('API_SERVER_ERROR');
-      throw new Error(`API_ERROR: ${errorMsg}`);
+    if (response.status === 404 && errorMsg.includes('model')) {
+      throw new Error('MODEL_NOT_FOUND');
     }
-    return response.json();
-  };
 
-  let data;
-  try {
-    data = await tryModel(currentModel);
-  } catch (err) {
-    if (err.message === 'MODEL_NOT_FOUND') {
-      console.log(`${currentModel} falló. Intentando con gemini-pro...`);
-      currentModel = 'gemini-pro'; // Fallback permanente para la sesión
-      data = await tryModel(currentModel);
-    } else {
-      throw err;
-    }
+    if (response.status === 400) throw new Error(`API_BAD_REQUEST: ${errorMsg}`);
+    if (response.status === 401 || response.status === 403) throw new Error('API_INVALID_KEY');
+    if (response.status === 429) throw new Error('API_RATE_LIMIT');
+    if (response.status >= 500) throw new Error('API_SERVER_ERROR');
+    throw new Error(`API_ERROR: ${errorMsg}`);
   }
 
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const data = await response.json();
+  const text = data?.choices?.[0]?.message?.content;
   if (!text) throw new Error('API_EMPTY_RESPONSE');
   
   return text.trim();
@@ -86,7 +68,7 @@ async function getProgressionRecommendation(exerciseName, history, exerciseInfo 
   }
 
   const prompt = buildProgressionPrompt(exerciseName, history, exerciseInfo);
-  return await callGemini(prompt, apiKey);
+  return await callOpenAI(prompt, apiKey);
 }
 
 /**
@@ -99,7 +81,7 @@ async function getExerciseInsight(exerciseName, history, exerciseInfo = {}) {
   const prompt = buildExerciseInsightPrompt(exerciseName, history, exerciseInfo);
   if (!prompt) return null;
 
-  return await callGemini(prompt, apiKey);
+  return await callOpenAI(prompt, apiKey);
 }
 
 /**
@@ -109,11 +91,11 @@ async function getExerciseInsight(exerciseName, history, exerciseInfo = {}) {
  */
 async function testApiConnection(apiKey) {
   try {
-    const result = await callGemini(
+    const result = await callOpenAI(
       'Responde solo con "OK" si estás funcionando correctamente.',
       apiKey
     );
-    return { ok: true, message: 'Conexión exitosa con Gemini ✓' };
+    return { ok: true, message: 'Conexión exitosa con OpenAI ✓' };
   } catch (err) {
     let message = 'Error de conexión desconocido';
     if (err.message === 'API_INVALID_KEY') {
@@ -121,7 +103,7 @@ async function testApiConnection(apiKey) {
     } else if (err.message === 'API_RATE_LIMIT') {
       message = 'Límite de peticiones alcanzado. Intenta en unos minutos.';
     } else if (err.message === 'API_SERVER_ERROR') {
-      message = 'Error en los servidores de Google. Intenta más tarde.';
+      message = 'Error en los servidores de OpenAI. Intenta más tarde.';
     } else if (err.message.includes('fetch')) {
       message = 'Sin conexión a internet.';
     } else {
@@ -139,7 +121,7 @@ function getErrorMessage(errorCode) {
     'NO_API_KEY':         'No tienes configurada una API Key. Ve a Configuración para añadirla.',
     'API_INVALID_KEY':    'Tu API Key no es válida. Verifica en la configuración.',
     'API_RATE_LIMIT':     'Has superado el límite de peticiones. Espera unos minutos.',
-    'API_SERVER_ERROR':   'Error en los servidores de Google. Intenta de nuevo.',
+    'API_SERVER_ERROR':   'Error en los servidores de OpenAI. Intenta de nuevo.',
     'API_EMPTY_RESPONSE': 'La IA no generó respuesta. Intenta de nuevo.',
     'API_BAD_REQUEST':    'Error en la solicitud. El historial puede estar vacío.',
   };

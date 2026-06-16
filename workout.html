@@ -180,7 +180,7 @@
 
 <script src="js/storage.js"></script>
 <script src="js/prompt.js"></script>
-<script src="js/gemini.js"></script>
+<script src="js/openai.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/app.js"></script>
 <script>
@@ -493,7 +493,7 @@ async function saveWorkout() {
         panel.querySelector('.ai-loading').innerHTML = `
           <div class="api-warning" style="margin:0">
             ⚠️ Sin API Key configurada.
-            <a onclick="window.location.href='settings.html'" style="margin-left:0.5rem">Configurar Gemini API</a>
+            <a onclick="window.location.href='settings.html'" style="margin-left:0.5rem">Configurar OpenAI API</a>
           </div>`;
         panel.querySelector('.ai-panel-subtitle').textContent = 'Sin IA disponible';
         continue;

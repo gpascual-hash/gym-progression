@@ -1,6 +1,6 @@
 /**
  * prompt.js — Constructor de prompts para la IA
- * Transforma el historial del usuario en un contexto estructurado para Gemini
+ * Transforma el historial del usuario en un contexto estructurado para OpenAI
  */
 
 /**
@@ -8,7 +8,7 @@
  * @param {string} exerciseName - Nombre del ejercicio
  * @param {Array}  history - Historial de sesiones con ese ejercicio
  * @param {Object} exerciseInfo - Datos del ejercicio (categoría, músculo, tipo)
- * @returns {string} Prompt listo para enviar a Gemini
+ * @returns {string} Prompt listo para enviar a OpenAI
  */
 function buildProgressionPrompt(exerciseName, history, exerciseInfo = {}) {
   const { category = 'Compuesto', muscle = '', type = '' } = exerciseInfo;

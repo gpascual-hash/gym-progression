@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Configuración de Gym Progression: API Key de Gemini, exportar e importar datos." />
+  <meta name="description" content="Configuración de Gym Progression: API Key de OpenAI, exportar e importar datos." />
   <title>Gym Progression — Configuración</title>
   <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -42,10 +42,10 @@
         </div>
       </div>
 
-      <!-- ─── API KEY DE GEMINI ─── -->
+      <!-- ─── API Key de OpenAI ─── -->
       <div class="settings-section animate-in animate-delay-1">
         <div class="settings-section-header">
-          <div class="settings-section-title">🤖 Google Gemini API</div>
+          <div class="settings-section-title">🤖 Google OpenAI API</div>
           <div class="settings-section-desc">Necesaria para las recomendaciones de sobrecarga progresiva con IA</div>
         </div>
 
@@ -79,11 +79,11 @@
 
           <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:1rem;width:100%;font-size:0.8rem;color:var(--text-secondary);line-height:1.7">
             <strong style="color:var(--text-primary)">¿Cómo obtener tu API Key gratuita?</strong><br>
-            1. Ve a <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent)">aistudio.google.com/app/apikey</a><br>
+            1. Ve a <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--accent)">platform.openai.com/api-keys</a><br>
             2. Inicia sesión con tu cuenta de Google<br>
             3. Haz clic en "Crear API Key"<br>
             4. Copia la clave y pégala aquí<br>
-            <span style="color:var(--success)">✓ El modelo gemini-1.5-flash es gratuito hasta 1500 peticiones/día</span>
+            <span style="color:var(--success)">✓ El modelo gpt-4o-mini es gratuito hasta 1500 peticiones/día</span>
           </div>
         </div>
       </div>
@@ -203,7 +203,7 @@
 
 <script src="js/storage.js"></script>
 <script src="js/prompt.js"></script>
-<script src="js/gemini.js"></script>
+<script src="js/openai.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/app.js"></script>
 <script>
@@ -216,8 +216,8 @@ function loadSettings() {
   const settings = getSettings();
 
   // API Key
-  if (settings.geminiApiKey) {
-    document.getElementById('api-key-input').value = settings.geminiApiKey;
+  if (settings.openaiApiKey) {
+    document.getElementById('api-key-input').value = settings.openaiApiKey;
     setApiStatus('configured');
   }
 
@@ -253,7 +253,7 @@ function saveApiKey() {
     showToast('Escribe una API Key primero', 'error');
     return;
   }
-  saveSettings({ geminiApiKey: key });
+  saveSettings({ openaiApiKey: key });
   setApiStatus('configured');
   showToast('API Key guardada correctamente ✓', 'success');
 }
@@ -328,7 +328,7 @@ function handleClearAll() {
     () => {
       const apiKey = getApiKey();
       clearAllData();
-      if (apiKey) saveSettings({ geminiApiKey: apiKey });
+      if (apiKey) saveSettings({ openaiApiKey: apiKey });
       updateDataSummary();
       showToast('Todos los datos han sido eliminados', 'success');
     }

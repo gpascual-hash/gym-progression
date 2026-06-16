@@ -54,7 +54,7 @@ function initStorage() {
   }
   if (!localStorage.getItem(KEYS.SETTINGS)) {
     localStorage.setItem(KEYS.SETTINGS, JSON.stringify({
-      geminiApiKey: '',
+      openaiApiKey: '',
       unit: 'kg',
       repRangeMin: 8,
       repRangeMax: 12,
@@ -162,7 +162,7 @@ function saveSettings(settings) {
 }
 
 function getApiKey() {
-  return getSettings().geminiApiKey || '';
+  return getSettings().openaiApiKey || '';
 }
 
 // ─── ESTADÍSTICAS ────────────────────────────────────────
@@ -226,7 +226,7 @@ function exportData() {
   const data = {
     exercises: getExercises(),
     sessions: getSessions(),
-    settings: { ...getSettings(), geminiApiKey: '***' }, // no exportar la API key
+    settings: { ...getSettings(), openaiApiKey: '***' }, // no exportar la API key
     exportedAt: new Date().toISOString(),
     version: '1.0',
   };

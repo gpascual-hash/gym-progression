@@ -1,31 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blank Test Project</title>
-    <style>
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #1a1a1a;
-            color: #ffffff;
-            text-align: center;
-        }
-        h1 {
-            font-weight: 300;
-            letter-spacing: 2px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#121212">
+  <title>Gym-agotchi</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div>
-        <h1>Test Project Started</h1>
-        <p>This is a blank website ready for your next big idea.</p>
+  <div class="container">
+    <header>
+      <h1>Gym-agotchi</h1>
+      <div class="subtitle">Alimenta a tu monstruo levantando peso en el gimnasio</div>
+    </header>
+
+    <!-- Monster Card -->
+    <div class="card">
+      <div class="level-badge" id="level-name">Egg</div>
+      
+      <div class="monster-stage" id="monster-container">
+        <!-- Image or emoji will be injected here -->
+      </div>
+
+      <div style="font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem;" id="current-volume">Mensual: 0 t</div>
+
+      <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <div class="progress-text" id="progress-text">0t / 20t</div>
+
+      <div class="input-group">
+        <input type="number" id="volume-input" placeholder="Toneladas (ej. 15)" step="0.1" min="0">
+        <button id="feed-btn">Alimentar 🥩</button>
+      </div>
     </div>
+
+    <!-- Trophy Room -->
+    <div class="trophy-room">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2>Sala de Trofeos 🏆</h2>
+        <button class="btn-danger" id="end-month-btn" style="padding: 0.5rem 1rem; font-size: 0.8rem;">[Debug] Fin de Mes</button>
+      </div>
+      <div class="subtitle" style="margin-top:0.25rem; font-size:0.85rem;">Las calaveras de tus monstruos pasados...</div>
+      
+      <div class="trophy-grid" id="trophy-grid">
+        <!-- Trophies injected here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('Service Worker registrado', reg))
+          .catch(err => console.error('Error al registrar SW', err));
+      });
+    }
+  </script>
+  <script src="js/app.js"></script>
 </body>
 </html>

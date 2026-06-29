@@ -1,18 +1,18 @@
 /**
- * openai.js — Integración con OpenAI API
+ * nvidia.js — Integración con NVIDIA API
  * Gestiona las llamadas a la API y el manejo de errores
  */
 
-const OPENAI_API_BASE = 'https://api.openai.com/v1/chat/completions';
-let currentModel      = 'gpt-4o-mini';
+const NVIDIA_API_BASE = 'https://integrate.api.nvidia.com/v1/chat/completions';
+let currentModel      = 'meta/llama-3.1-70b-instruct';
 
 /**
- * Llama a la API de OpenAI con un prompt
+ * Llama a la API de NVIDIA con un prompt
  * @param {string} prompt - El prompt a enviar
- * @param {string} apiKey - La clave de API de OpenAI
+ * @param {string} apiKey - La clave de API de NVIDIA
  * @returns {Promise<string>} La respuesta de la IA
  */
-async function callOpenAI(prompt, apiKey) {
+async function callNvidia(prompt, apiKey) {
   if (!apiKey) throw new Error('NO_API_KEY');
 
   const body = {
@@ -22,7 +22,7 @@ async function callOpenAI(prompt, apiKey) {
     max_tokens: 512,
   };
 
-  const response = await fetch(OPENAI_API_BASE, {
+  const response = await fetch(NVIDIA_API_BASE, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -68,7 +68,7 @@ async function getProgressionRecommendation(exerciseName, history, exerciseInfo 
   }
 
   const prompt = buildProgressionPrompt(exerciseName, history, exerciseInfo);
-  return await callOpenAI(prompt, apiKey);
+  return await callNvidia(prompt, apiKey);
 }
 
 /**
@@ -81,7 +81,7 @@ async function getExerciseInsight(exerciseName, history, exerciseInfo = {}) {
   const prompt = buildExerciseInsightPrompt(exerciseName, history, exerciseInfo);
   if (!prompt) return null;
 
-  return await callOpenAI(prompt, apiKey);
+  return await callNvidia(prompt, apiKey);
 }
 
 /**
@@ -91,11 +91,11 @@ async function getExerciseInsight(exerciseName, history, exerciseInfo = {}) {
  */
 async function testApiConnection(apiKey) {
   try {
-    const result = await callOpenAI(
+    const result = await callNvidia(
       'Responde solo con "OK" si estás funcionando correctamente.',
       apiKey
     );
-    return { ok: true, message: 'Conexión exitosa con OpenAI ✓' };
+    return { ok: true, message: 'Conexión exitosa con NVIDIA ✓' };
   } catch (err) {
     let message = 'Error de conexión desconocido';
     if (err.message === 'API_INVALID_KEY') {
@@ -103,7 +103,7 @@ async function testApiConnection(apiKey) {
     } else if (err.message === 'API_RATE_LIMIT') {
       message = 'Límite de peticiones alcanzado. Intenta en unos minutos.';
     } else if (err.message === 'API_SERVER_ERROR') {
-      message = 'Error en los servidores de OpenAI. Intenta más tarde.';
+      message = 'Error en los servidores de NVIDIA. Intenta más tarde.';
     } else if (err.message.includes('fetch')) {
       message = 'Sin conexión a internet.';
     } else {
@@ -121,7 +121,7 @@ function getErrorMessage(errorCode) {
     'NO_API_KEY':         'No tienes configurada una API Key. Ve a Configuración para añadirla.',
     'API_INVALID_KEY':    'Tu API Key no es válida. Verifica en la configuración.',
     'API_RATE_LIMIT':     'Has superado el límite de peticiones. Espera unos minutos.',
-    'API_SERVER_ERROR':   'Error en los servidores de OpenAI. Intenta de nuevo.',
+    'API_SERVER_ERROR':   'Error en los servidores de NVIDIA. Intenta de nuevo.',
     'API_EMPTY_RESPONSE': 'La IA no generó respuesta. Intenta de nuevo.',
     'API_BAD_REQUEST':    'Error en la solicitud. El historial puede estar vacío.',
   };

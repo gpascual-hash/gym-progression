@@ -1,6 +1,6 @@
 /**
  * prompt.js — Constructor de prompts para la IA
- * Transforma el historial del usuario en un contexto estructurado para OpenAI
+ * Transforma el historial del usuario en un contexto estructurado para NVIDIA
  */
 
 /**
@@ -8,7 +8,7 @@
  * @param {string} exerciseName - Nombre del ejercicio
  * @param {Array}  history - Historial de sesiones con ese ejercicio
  * @param {Object} exerciseInfo - Datos del ejercicio (categoría, músculo, tipo)
- * @returns {string} Prompt listo para enviar a OpenAI
+ * @returns {string} Prompt listo para enviar a NVIDIA
  */
 function buildProgressionPrompt(exerciseName, history, exerciseInfo = {}) {
   const { category = 'Compuesto', muscle = '', type = '' } = exerciseInfo;
